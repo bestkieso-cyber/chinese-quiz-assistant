@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>國中國文單選題命題小幫手 V2.1</title>
+    <title>國中國文命題小幫手 V2.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
@@ -16,8 +16,8 @@
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-4 md:p-8">
 
     <header class="max-w-5xl mx-auto mb-8 text-center">
-        <h1 class="text-3xl md:text-4xl font-bold text-slate-700 tracking-wide">✏️ 國中國文命題小幫手 <span class="text-sm bg-green-100 text-green-700 px-2 py-1 rounded-full align-middle">V2.1 修正版</span></h1>
-        <p class="text-slate-500 mt-2">如果您看到這個標題，代表程式碼已更新成功</p>
+        <h1 class="text-3xl md:text-4xl font-bold text-slate-700 tracking-wide">✏️ 國中國文命題小幫手 <span class="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded-full align-middle">V2.2 偵錯版</span></h1>
+        <p class="text-slate-500 mt-2">支援自動偵測相容模型，解決 Not Found 問題</p>
     </header>
 
     <main class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8">
@@ -36,8 +36,8 @@
                 <textarea id="newMaterial" placeholder="貼上新文章..." class="w-full p-3 border border-slate-200 rounded-lg h-24 text-sm resize-none mb-2"></textarea>
                 <input type="file" id="pdfInput" accept="application/pdf" class="text-xs">
             </div>
-            <button id="generateBtn" onclick="generateQuestions()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-3 px-4 rounded-xl">🚀 開始自動命題</button>
-            <p id="loadingText" class="text-center text-sm text-blue-600 mt-3 hidden animate-pulse">AI 正在思考中，請稍候...</p>
+            <button id="generateBtn" onclick="generateQuestions()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-3 px-4 rounded-xl transition-all">🚀 開始自動命題</button>
+            <p id="loadingText" class="text-center text-sm text-blue-600 mt-3 hidden animate-pulse">正在測試相容路徑並生成題目中...</p>
         </div>
         <div class="md:col-span-7 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 min-h-[600px] overflow-y-auto">
             <h2 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">📋 命題結果卡片</h2>
@@ -48,7 +48,7 @@
     </main>
 
     <script>
-        const SYSTEM_PROMPT = `你是一位國中國文教學專家，請針對提供的原題與新素材，產出「原題解析卡」與「兩題平行題卡」。格式請使用 Markdown。`;
+        const SYSTEM_PROMPT = `你是一位國中國文教學專家。請根據原題與素材，生成原題解析卡與兩題平行題卡。`;
         mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
 
         window.onload = function() {
@@ -65,6 +65,16 @@
             });
         }
 
+        async function tryFetch(modelName, apiVersion, apiKey, userParts) {
+            const url = `https://generativelanguage.googleapis.com/${apiVersion}/models/${modelName}:generateContent?key=${apiKey}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: userParts }] })
+            });
+            return response;
+        }
+
         async function generateQuestions() {
             const apiKey = document.getElementById('apiKey').value.trim();
             if (!apiKey) return alert("請輸入 API Key");
@@ -73,33 +83,51 @@
             document.getElementById('generateBtn').disabled = true;
             document.getElementById('loadingText').classList.remove('hidden');
             const outputArea = document.getElementById('outputArea');
-            outputArea.innerHTML = '正在讀取資料...';
+            outputArea.innerHTML = '<p class="text-blue-500">正在嘗試多種連線路徑...</p>';
 
             try {
-                let userParts = [{ text: SYSTEM_PROMPT }];
+                let userParts = [{ text: SYSTEM_PROMPT + "\n\n以下是輸入內容：\n" }];
                 const qText = document.getElementById('originalQuestion').value;
                 const mText = document.getElementById('newMaterial').value;
-                const img = document.getElementById('imageInput').files[0];
-                const pdf = document.getElementById('pdfInput').files[0];
+                const imgFile = document.getElementById('imageInput').files[0];
+                const pdfFile = document.getElementById('pdfInput').files[0];
 
-                userParts.push({ text: "\n原題：" + qText });
-                if (img) userParts.push(await getBase64(img));
-                userParts.push({ text: "\n新素材：" + mText });
-                if (pdf) userParts.push(await getBase64(pdf));
+                userParts.push({ text: "【原題】\n" + qText });
+                if (imgFile) userParts.push(await getBase64(imgFile));
+                userParts.push({ text: "\n【素材】\n" + mText });
+                if (pdfFile) userParts.push(await getBase64(pdfFile));
 
-                // 使用目前最不容易出錯的 v1beta 網址
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                // 準備多種模型嘗試路徑（依序測試：最新的 Flash -> 標準 Flash -> 舊版 Pro）
+                const testConfigs = [
+                    { name: 'gemini-1.5-flash-latest', ver: 'v1beta' },
+                    { name: 'gemini-1.5-flash', ver: 'v1beta' },
+                    { name: 'gemini-1.5-flash', ver: 'v1' },
+                    { name: 'gemini-pro', ver: 'v1beta' }
+                ];
 
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: userParts }] })
-                });
+                let lastError = "";
+                let successfulData = null;
 
-                const data = await response.json();
-                if (data.error) throw new Error(data.error.message);
+                for (const config of testConfigs) {
+                    try {
+                        const res = await tryFetch(config.name, config.ver, apiKey, userParts);
+                        const data = await res.json();
+                        if (data.candidates) {
+                            successfulData = data;
+                            break; // 成功就跳出循環
+                        } else {
+                            lastError = data.error ? data.error.message : "未知錯誤";
+                        }
+                    } catch (e) {
+                        lastError = e.message;
+                    }
+                }
 
-                const aiText = data.candidates[0].content.parts[0].text;
+                if (!successfulData) {
+                    throw new Error("所有連線嘗試皆失敗。最後一個錯誤訊息：" + lastError);
+                }
+
+                const aiText = successfulData.candidates[0].content.parts[0].text;
                 outputArea.innerHTML = marked.parse(aiText);
                 outputArea.querySelectorAll('pre code.language-mermaid').forEach(el => {
                     const div = document.createElement('div');
@@ -110,7 +138,16 @@
                 await mermaid.run({ nodes: document.querySelectorAll('.mermaid') });
 
             } catch (error) {
-                outputArea.innerHTML = `<p class="text-red-500">發生錯誤：${error.message}</p>`;
+                outputArea.innerHTML = `
+                    <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <p class="text-red-600 font-bold">連線失敗</p>
+                        <p class="text-red-500 text-xs mt-2">${error.message}</p>
+                        <hr class="my-2">
+                        <p class="text-slate-600 text-xs">請確認：<br>
+                        1. 您的 Key 是否為 AI Studio 產生的金鑰？<br>
+                        2. 您的 Google 帳號是否有限制（如校園、公司帳號）？<br>
+                        3. 如果持續失敗，建議申請一個新的 API Key 試試。</p>
+                    </div>`;
             } finally {
                 document.getElementById('generateBtn').disabled = false;
                 document.getElementById('loadingText').classList.add('hidden');
