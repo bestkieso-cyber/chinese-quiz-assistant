@@ -3,60 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>國中國文命題小幫手 V2.2</title>
+    <title>國中國文命題小幫手 V5.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; }
+        .prose h2 { color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-top: 2.5rem; }
+        .card-divider { border: 0; height: 1px; background-image: linear-gradient(to right, rgba(0,0,0,0), rgba(0,0,0,0.1), rgba(0,0,0,0)); margin: 3rem 0; }
+        .mermaid { background: white; padding: 1.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; margin: 1.5rem 0; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .mermaid { display: flex; justify-content: center; margin: 1rem 0; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-4 md:p-8">
+<body class="text-slate-800 min-h-screen p-4 md:p-8">
 
-    <header class="max-w-5xl mx-auto mb-8 text-center">
-        <h1 class="text-3xl md:text-4xl font-bold text-slate-700 tracking-wide">✏️ 國中國文命題小幫手 <span class="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded-full align-middle">V2.2 偵錯版</span></h1>
-        <p class="text-slate-500 mt-2">支援自動偵測相容模型，解決 Not Found 問題</p>
+    <header class="max-w-6xl mx-auto mb-10 text-center">
+        <h1 class="text-3xl md:text-5xl font-extrabold text-slate-800 tracking-tight flex items-center justify-center gap-4">
+            ✏️ 國中國文命題小幫手 <span class="text-sm bg-indigo-600 text-white px-3 py-1 rounded-full uppercase tracking-widest">V5.1 旗艦版</span>
+        </h1>
+        <p class="text-slate-500 mt-4 text-lg">內建自動開鎖連線機制 ‧ 深度辨識特殊題型 ‧ 視覺優化排版</p>
     </header>
 
-    <main class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8">
-        <div class="md:col-span-5 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <div class="mb-5">
-                <label class="block text-sm font-semibold text-slate-600 mb-1">🔑 Google Gemini API Key</label>
-                <input type="password" id="apiKey" placeholder="請貼上你的 API Key" class="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400 text-sm">
+    <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- 左側面板 -->
+        <div class="lg:col-span-4 space-y-6">
+            <div class="bg-white p-6 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100">
+                <label class="block text-sm font-bold text-slate-700 mb-2">🔑 API Key</label>
+                <input type="password" id="apiKey" placeholder="貼上您的 Gemini API Key" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
             </div>
-            <div class="mb-5 bg-slate-50 p-4 rounded-xl">
-                <label class="block text-sm font-semibold text-slate-600 mb-2">📄 步驟一：提供原題</label>
-                <textarea id="originalQuestion" placeholder="貼上原題文字..." class="w-full p-3 border border-slate-200 rounded-lg h-24 text-sm resize-none mb-2"></textarea>
-                <input type="file" id="imageInput" accept="image/*" class="text-xs">
+
+            <div class="bg-white p-6 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100">
+                <label class="block text-sm font-bold text-slate-700 mb-3">📄 步驟一：分析原題形式</label>
+                <textarea id="qText" placeholder="貼上原題，或上傳圖片 (支援跨區、圖表、表格題辨識)..." class="w-full p-4 border border-slate-200 rounded-2xl h-32 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none mb-4"></textarea>
+                <input type="file" id="imageInput" accept="image/*" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700">
             </div>
-            <div class="mb-6 bg-slate-50 p-4 rounded-xl">
-                <label class="block text-sm font-semibold text-slate-600 mb-2">💡 步驟二：提供新素材</label>
-                <textarea id="newMaterial" placeholder="貼上新文章..." class="w-full p-3 border border-slate-200 rounded-lg h-24 text-sm resize-none mb-2"></textarea>
-                <input type="file" id="pdfInput" accept="application/pdf" class="text-xs">
+
+            <div class="bg-white p-6 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100">
+                <label class="block text-sm font-bold text-slate-700 mb-3">💡 步驟二：引入新素材內容</label>
+                <textarea id="mText" placeholder="貼上新文章，或上傳 PDF..." class="w-full p-4 border border-slate-200 rounded-2xl h-32 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none mb-4"></textarea>
+                <input type="file" id="pdfInput" accept="application/pdf" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-green-50 file:text-green-700">
             </div>
-            <button id="generateBtn" onclick="generateQuestions()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-3 px-4 rounded-xl transition-all">🚀 開始自動命題</button>
-            <p id="loadingText" class="text-center text-sm text-blue-600 mt-3 hidden animate-pulse">正在測試相容路徑並生成題目中...</p>
+
+            <button id="btn" onclick="generate()" class="w-full bg-slate-900 hover:bg-indigo-700 text-white font-bold py-5 rounded-2xl shadow-lg transition-all transform active:scale-95 flex justify-center items-center gap-3 text-lg">
+                🚀 開始智能平行命題
+            </button>
+            <p id="loading" class="text-center text-sm text-indigo-600 hidden animate-pulse font-bold">🧠 正在尋找連線路徑並仿作特殊題型中...</p>
         </div>
-        <div class="md:col-span-7 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 min-h-[600px] overflow-y-auto">
-            <h2 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">📋 命題結果卡片</h2>
-            <div id="outputArea" class="prose prose-slate max-w-none text-sm leading-relaxed">
-                <p class="text-slate-400 text-center mt-20">請輸入資料後按下開始按鈕</p>
+
+        <!-- 右側結果展示區 -->
+        <div class="lg:col-span-8 bg-white p-8 md:p-12 rounded-3xl shadow-2xl shadow-slate-200/60 border border-slate-100 min-h-[800px]">
+            <div id="output" class="prose prose-slate max-w-none">
+                <div class="flex flex-col items-center justify-center py-40 opacity-30">
+                    <svg class="w-20 h-20 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    <p class="text-xl font-medium">請在左側輸入資料開始命題</p>
+                </div>
             </div>
         </div>
     </main>
 
     <script>
-        const SYSTEM_PROMPT = `你是一位國中國文教學專家。請根據原題與素材，生成原題解析卡與兩題平行題卡。`;
+        const SYSTEM_PROMPT = `你是一位精通國中會考命題趨勢的專家。
+請依據提供的「原題」與「新素材」，產出高品質解析與平行題。
+
+【核心仿作指令】
+1. 形式辨識：必須深度辨識原題形式（如：跨領域圖表、非連續性文本、對話情境、Markdown表格選項、流程圖）。
+2. 結構複製：平行題必須 100% 複製原題的特殊形式。若原題有圖表，平行題必須用 Mermaid 語法繪製相關圖表。
+3. 視覺美感：使用標題裝飾符號與分隔線，確保卡片間有足夠視覺間距，閱讀舒適。
+
+【輸出格式】
+## 🎴 原題解析卡
+---
+**【題型形式】** 辨識結果
+**【仿作要點】** 必須複製的元素
+**【原題解析】** 邏輯分析
+
+## 📝 平行題卡 #1 (與 #2)
+---
+**【素材內容】** (若需圖表請用 \`\`\`mermaid \`\`\`)
+**【題幹】** 題目文字
+**【選項】** (若原題為表格，此處必須用 Markdown 表格)
+**【答案】** 
+**【解析】** (含正答理由與誘答分析)
+**【品質核可】** ✓`;
+
         mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
 
-        window.onload = function() {
-            const savedKey = localStorage.getItem('gemini_api_key');
-            if (savedKey) document.getElementById('apiKey').value = savedKey;
-        };
-
-        function getBase64(file) {
+        function fileToBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = () => resolve({ inlineData: { data: reader.result.split(',')[1], mimeType: file.type } });
@@ -65,94 +100,83 @@
             });
         }
 
-        async function tryFetch(modelName, apiVersion, apiKey, userParts) {
-            const url = `https://generativelanguage.googleapis.com/${apiVersion}/models/${modelName}:generateContent?key=${apiKey}`;
-            const response = await fetch(url, {
+        async function tryAPI(key, model, ver, parts) {
+            const url = `https://generativelanguage.googleapis.com/${ver}/models/${model}:generateContent?key=${key}`;
+            const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: userParts }] })
+                body: JSON.stringify({ contents: [{ parts: parts }] })
             });
-            return response;
+            return res;
         }
 
-        async function generateQuestions() {
+        async function generate() {
             const apiKey = document.getElementById('apiKey').value.trim();
-            if (!apiKey) return alert("請輸入 API Key");
+            if (!apiKey) return alert("請輸入 API Key！");
             localStorage.setItem('gemini_api_key', apiKey);
+            
+            const btn = document.getElementById('btn');
+            const loading = document.getElementById('loading');
+            const output = document.getElementById('output');
 
-            document.getElementById('generateBtn').disabled = true;
-            document.getElementById('loadingText').classList.remove('hidden');
-            const outputArea = document.getElementById('outputArea');
-            outputArea.innerHTML = '<p class="text-blue-500">正在嘗試多種連線路徑...</p>';
+            btn.disabled = true;
+            loading.classList.remove('hidden');
+            output.innerHTML = '<p class="text-indigo-600 text-center py-20 font-bold">🧬 正在自動開鎖多個 API 路徑並進行形式仿作中...</p>';
 
             try {
-                let userParts = [{ text: SYSTEM_PROMPT + "\n\n以下是輸入內容：\n" }];
-                const qText = document.getElementById('originalQuestion').value;
-                const mText = document.getElementById('newMaterial').value;
-                const imgFile = document.getElementById('imageInput').files[0];
-                const pdfFile = document.getElementById('pdfInput').files[0];
+                let userParts = [{ text: SYSTEM_PROMPT }];
+                const qT = document.getElementById('qText').value;
+                const mT = document.getElementById('mText').value;
+                const img = document.getElementById('imageInput').files[0];
+                const pdf = document.getElementById('pdfInput').files[0];
 
-                userParts.push({ text: "【原題】\n" + qText });
-                if (imgFile) userParts.push(await getBase64(imgFile));
-                userParts.push({ text: "\n【素材】\n" + mText });
-                if (pdfFile) userParts.push(await getBase64(pdfFile));
+                userParts.push({ text: "\n\n【原題】：\n" + (qT || "(見附檔圖片)") });
+                if (img) userParts.push(await fileToBase64(img));
+                userParts.push({ text: "\n\n【新素材】：\n" + (mT || "(見附檔 PDF)") });
+                if (pdf) userParts.push(await fileToBase64(pdf));
 
-                // 準備多種模型嘗試路徑（依序測試：最新的 Flash -> 標準 Flash -> 舊版 Pro）
-                const testConfigs = [
-                    { name: 'gemini-1.5-flash-latest', ver: 'v1beta' },
-                    { name: 'gemini-1.5-flash', ver: 'v1beta' },
+                const configs = [
                     { name: 'gemini-1.5-flash', ver: 'v1' },
-                    { name: 'gemini-pro', ver: 'v1beta' }
+                    { name: 'gemini-2.0-flash', ver: 'v1beta' },
+                    { name: 'gemini-flash-latest', ver: 'v1beta' }
                 ];
 
-                let lastError = "";
-                let successfulData = null;
+                let successData = null;
+                let lastErr = "";
 
-                for (const config of testConfigs) {
+                for (const conf of configs) {
                     try {
-                        const res = await tryFetch(config.name, config.ver, apiKey, userParts);
-                        const data = await res.json();
-                        if (data.candidates) {
-                            successfulData = data;
-                            break; // 成功就跳出循環
-                        } else {
-                            lastError = data.error ? data.error.message : "未知錯誤";
-                        }
-                    } catch (e) {
-                        lastError = e.message;
-                    }
+                        const r = await tryAPI(apiKey, conf.name, conf.ver, userParts);
+                        const d = await r.json();
+                        if (d.candidates) { successData = d; break; }
+                        else if (d.error) lastErr = d.error.message;
+                    } catch (e) { lastErr = e.message; }
                 }
 
-                if (!successfulData) {
-                    throw new Error("所有連線嘗試皆失敗。最後一個錯誤訊息：" + lastError);
+                if (!successData) throw new Error(lastErr || "連線路徑全數失敗");
+
+                output.innerHTML = marked.parse(successData.candidates[0].content.parts[0].text);
+
+                const mBlocks = output.querySelectorAll('pre code.language-mermaid');
+                for (let b of mBlocks) {
+                    const d = document.createElement('div');
+                    d.className = 'mermaid'; d.textContent = b.textContent;
+                    b.parentElement.replaceWith(d);
                 }
+                if (mBlocks.length > 0) await mermaid.run({ nodes: document.querySelectorAll('.mermaid') });
 
-                const aiText = successfulData.candidates[0].content.parts[0].text;
-                outputArea.innerHTML = marked.parse(aiText);
-                outputArea.querySelectorAll('pre code.language-mermaid').forEach(el => {
-                    const div = document.createElement('div');
-                    div.className = 'mermaid';
-                    div.innerText = el.innerText;
-                    el.parentElement.replaceWith(div);
-                });
-                await mermaid.run({ nodes: document.querySelectorAll('.mermaid') });
-
-            } catch (error) {
-                outputArea.innerHTML = `
-                    <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <p class="text-red-600 font-bold">連線失敗</p>
-                        <p class="text-red-500 text-xs mt-2">${error.message}</p>
-                        <hr class="my-2">
-                        <p class="text-slate-600 text-xs">請確認：<br>
-                        1. 您的 Key 是否為 AI Studio 產生的金鑰？<br>
-                        2. 您的 Google 帳號是否有限制（如校園、公司帳號）？<br>
-                        3. 如果持續失敗，建議申請一個新的 API Key 試試。</p>
-                    </div>`;
+            } catch (err) {
+                output.innerHTML = `<div class="bg-red-50 p-6 rounded-2xl border-2 border-red-200 text-red-600 font-bold">❌ 系統偵錯：${err.message}</div>`;
             } finally {
-                document.getElementById('generateBtn').disabled = false;
-                document.getElementById('loadingText').classList.add('hidden');
+                btn.disabled = false;
+                loading.classList.add('hidden');
             }
         }
+
+        window.onload = () => {
+            const key = localStorage.getItem('gemini_api_key');
+            if (key) document.getElementById('apiKey').value = key;
+        };
     </script>
 </body>
 </html>
